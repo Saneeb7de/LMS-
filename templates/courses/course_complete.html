@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Course Completed - {{ course.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .completion-card {
+        max-width: 800px;
+        margin: 50px auto;
+    }
+    
+    .trophy-icon {
+        font-size: 5rem;
+        color: #ffc107;
+        animation: bounce 1s ease infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-20px); }
+    }
+    
+    .certificate-box {
+        border: 3px solid #28a745;
+        border-radius: 10px;
+        padding: 40px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .confetti {
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        background: #ffc107;
+        position: absolute;
+        animation: confetti-fall 3s linear infinite;
+    }
+    
+    @keyframes confetti-fall {
+        to {
+            transform: translateY(100vh) rotate(360deg);
+            opacity: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="completion-card">
+        <div class="card shadow-lg">
+            <div class="card-body text-center p-5">
+                <!-- Trophy Icon -->
+                <div class="mb-4">
+                    <i class="fas fa-trophy trophy-icon"></i>
+                </div>
+                
+                <!-- Congratulations Message -->
+                <h1 class="display-4 mb-3">🎉 Congratulations! 🎉</h1>
+                <h3 class="text-muted mb-4">You've Completed the Course!</h3>
+                
+                <!-- Certificate Box -->
+                <div class="certificate-box mb-4">
+                    <h2 class="text-success mb-3">{{ course.title }}</h2>
+                    <p class="lead mb-2">Certificate of Completion</p>
+                    <hr class="my-3">
+                    <p class="mb-2"><strong>Student:</strong> {{ user.get_full_name|default:user.username }}</p>
+                    <p class="mb-2"><strong>Completed on:</strong> {{ enrollment.completed_at|date:"F d, Y" }}</p>
+                    <p class="mb-0"><strong>Progress:</strong> {{ enrollment.progress }}%</p>
+                </div>
+                
+                <!-- Stats -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h4 class="text-primary">{{ course.modules.count }}</h4>
+                                <small class="text-muted">Modules Completed</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h4 class="text-success">100%</h4>
+                                <small class="text-muted">Course Progress</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h4 class="text-info">{{ enrollment.enrolled_at|date:"M d, Y" }}</h4>
+                                <small class="text-muted">Started Date</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="{% url 'user_dashboard' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-home me-2"></i>Back to Dashboard
+                    </a>
+                    <a href="{% url 'course_view' course.id %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-eye me-2"></i>Review Course
+                    </a>
+                    <a href="{% url 'course_list' %}" class="btn btn-success btn-lg">
+                        <i class="fas fa-book me-2"></i>Browse More Courses
+                    </a>
+                </div>
+                
+                <!-- Social Share -->
+                <div class="mt-4">
+                    <p class="text-muted mb-2">Share your achievement:</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="#" class="btn btn-outline-primary btn-sm">
+                            <i class="fab fa-facebook-f"></i> Facebook
+                        </a>
+                        <a href="#" class="btn btn-outline-info btn-sm">
+                            <i class="fab fa-twitter"></i> Twitter
+                        </a>
+                        <a href="#" class="btn btn-outline-primary btn-sm">
+                            <i class="fab fa-linkedin-in"></i> LinkedIn
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Create confetti effect
+    function createConfetti() {
+        const colors = ['#ffc107', '#28a745', '#007bff', '#dc3545', '#17a2b8'];
+        const container = document.body;
+        
+        for (let i = 0; i < 50; i++) {
+            setTimeout(() => {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                container.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 5000);
+            }, i * 30);
+        }
+    }
+    
+    // Trigger confetti on page load
+    window.addEventListener('load', createConfetti);
+</script>
+{% endblock %}

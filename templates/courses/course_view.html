@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ course.title }} - Learning{% endblock %}
+
+{% block extra_css %}
+<style>
+    .module-sidebar {
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+        background-color: #f8f9fa;
+    }
+    
+    .module-item {
+        cursor: pointer;
+        transition: background-color 0.2s;
+        border-left: 3px solid transparent;
+    }
+    
+    .module-item:hover {
+        background-color: #e9ecef;
+    }
+    
+    .module-item.active {
+        background-color: #e7f1ff;
+        border-left-color: var(--primary-color);
+    }
+    
+    .module-item.completed {
+        background-color: #d4edda;
+    }
+    
+    .content-area {
+        min-height: 500px;
+    }
+    
+    .video-container {
+        position: relative;
+        padding-bottom: 56.25%;
+        height: 0;
+        overflow: hidden;
+    }
+    
+    .video-container iframe,
+    .video-container video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row g-0">
+        <!-- Module Sidebar -->
+        <div class="col-md-4 col-lg-3 module-sidebar border-end">
+            <div class="p-3 bg-white border-bottom">
+                <h5 class="mb-1">{{ course.title }}</h5>
+                <div class="progress" style="height: 5px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ enrollment.progress }}%"></div>
+                </div>
+                <small class="text-muted">{{ enrollment.progress }}% Complete</small>
+            </div>
+            
+            <div class="list-group list-group-flush">
+                {% for module in modules %}
+                    <div class="list-group-item module-item {% if current_module.id == module.id %}active{% endif %} {% if module.is_completed %}completed{% endif %}"
+                         data-module-id="{{ module.id }}"
+                         data-module-type="{{ module.module_type }}">
+                        <div class="d-flex align-items-start">
+                            <div class="form-check me-2">
+                                <input class="form-check-input module-checkbox" 
+                                       type="checkbox" 
+                                       {% if module.is_completed %}checked{% endif %}
+                                       data-module-id="{{ module.id }}">
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <i class="fas {% if module.module_type == 'video' %}fa-video{% elif module.module_type == 'pdf' %}fa-file-pdf{% elif module.module_type == 'quiz' %}fa-question-circle{% else %}fa-file-alt{% endif %} me-1"></i>
+                                        <small><strong>{{ module.title }}</strong></small>
+                                    </div>
+                                    {% if module.duration_minutes > 0 %}
+                                        <small class="text-muted">{{ module.duration_minutes }}m</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="col-md-8 col-lg-9">
+            <div class="p-4">
+                {% if current_module %}
+                    <div id="module-content-{{ current_module.id }}">
+                        <h2>{{ current_module.title }}</h2>
+                        
+                        {% if current_module.description %}
+                            <p class="text-muted">{{ current_module.description }}</p>
+                        {% endif %}
+                        
+                        <hr>
+                        
+                        <div class="content-area">
+                            {% if current_module.module_type == 'video' %}
+                                <div class="video-container">
+                                    {% if current_module.video_url %}
+                                        <!-- YouTube or external video -->
+                                        {% if 'youtube.com' in current_module.video_url or 'youtu.be' in current_module.video_url %}
+                                            {% if 'watch?v=' in current_module.video_url %}
+                                                <iframe src="https://www.youtube.com/embed/{{ current_module.video_url|slice:'32:' }}" 
+                                                        frameborder="0" 
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                        allowfullscreen></iframe>
+                                            {% else %}
+                                                <iframe src="{{ current_module.video_url }}" 
+                                                        frameborder="0" 
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                        allowfullscreen></iframe>
+                                            {% endif %}
+                                        {% else %}
+                                            <iframe src="{{ current_module.video_url }}" frameborder="0" allowfullscreen></iframe>
+                                        {% endif %}
+                                    {% elif current_module.video_file %}
+                                        <video controls>
+                                            <source src="{{ current_module.video_file.url }}" type="video/mp4">
+                                            Your browser does not support the video tag.
+                                        </video>
+                                    {% endif %}
+                                </div>
+                            {% elif current_module.module_type == 'text' %}
+                                <div class="text-content">
+                                    {{ current_module.text_content|safe }}
+                                </div>
+                            {% elif current_module.module_type == 'pdf' %}
+                                {% if current_module.pdf_file %}
+                                    <div class="pdf-container">
+                                        <iframe src="{{ current_module.pdf_file.url }}" 
+                                                width="100%" 
+                                                height="600px"></iframe>
+                                        <div class="mt-3">
+                                            <a href="{{ current_module.pdf_file.url }}" 
+                                               class="btn btn-primary" 
+                                               download>
+                                                <i class="fas fa-download me-2"></i>Download PDF
+                                            </a>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        
+                        <hr class="mt-4">
+                        
+                        {% if all_modules_completed %}
+                        <!-- All modules completed - Show finish course option -->
+                        <div class="alert alert-success" role="alert">
+                            <h5 class="alert-heading"><i class="fas fa-trophy me-2"></i>Congratulations!</h5>
+                            <p>You have completed all modules in this course!</p>
+                            <hr>
+                            <a href="{% url 'finish_course' course.id %}" class="btn btn-success btn-lg">
+                                <i class="fas fa-graduation-cap me-2"></i>Finish Course & Get Certificate
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between">
+                            <button class="btn btn-outline-secondary" id="prevModule">
+                                <i class="fas fa-arrow-left me-2"></i>Previous
+                            </button>
+                            <button class="btn btn-success" id="markComplete" data-module-id="{{ current_module.id }}">
+                                <i class="fas fa-check me-2"></i>Mark as Complete
+                            </button>
+                            <button class="btn btn-primary" id="nextModule">
+                                Next<i class="fas fa-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                        <h3 class="text-muted">No module selected</h3>
+                        <p>Select a module from the sidebar to begin</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const moduleItems = document.querySelectorAll('.module-item');
+        const markCompleteBtn = document.getElementById('markComplete');
+        
+        // Module item click handler
+        moduleItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const moduleId = this.getAttribute('data-module-id');
+                window.location.href = `?module=${moduleId}`;
+            });
+        });
+        
+        // Mark complete handler
+        if (markCompleteBtn) {
+            markCompleteBtn.addEventListener('click', function() {
+                const moduleId = this.getAttribute('data-module-id');
+                
+                fetch(`/courses/module/${moduleId}/complete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        }
+        
+        // Checkbox handler
+        const checkboxes = document.querySelectorAll('.module-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function(e) {
+                e.stopPropagation();
+                const moduleId = this.getAttribute('data-module-id');
+                
+                if (this.checked) {
+                    fetch(`/courses/module/${moduleId}/complete/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

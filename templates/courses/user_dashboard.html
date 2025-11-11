@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+
+{% block title %}My Dashboard - LMS Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 3rem 2rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 400px;
+        height: 400px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .hero-section::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stats-card.primary {
+        border-left-color: #6366f1;
+    }
+    
+    .stats-card.success {
+        border-left-color: #10b981;
+    }
+    
+    .stats-card.warning {
+        border-left-color: #f59e0b;
+    }
+    
+    .stats-card.info {
+        border-left-color: #06b6d4;
+    }
+    
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .section-title {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 2rem;
+    }
+    
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 0;
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(90deg, #6366f1, #06b6d4);
+        border-radius: 2px;
+    }
+    
+    .course-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 10;
+    }
+    
+    .completion-badge {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        z-index: 10;
+    }
+    
+    .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #cbd5e1;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <div class="row mb-4" data-aos="fade-up">
+        <div class="col-12">
+            <div class="hero-section">
+                <div class="position-relative" style="z-index: 1;">
+                    <h1 class="display-4 fw-bold mb-3">Welcome back, {{ user.username }}! 👋</h1>
+                    <p class="lead mb-0">Continue your learning journey and unlock your potential</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-5" data-aos="fade-up" data-aos-delay="100">
+        <div class="col-md-3 mb-3">
+            <div class="stats-card primary">
+                <div class="stats-icon" style="background: linear-gradient(135deg, #e0e7ff, #c7d2fe);">
+                    <i class="fas fa-book-open text-primary"></i>
+                </div>
+                <h3 class="fw-bold mb-1">{{ enrolled_count }}</h3>
+                <p class="text-muted mb-0">Total Enrolled</p>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card success">
+                <div class="stats-icon" style="background: linear-gradient(135deg, #d1fae5, #a7f3d0);">
+                    <i class="fas fa-trophy text-success"></i>
+                </div>
+                <h3 class="fw-bold mb-1">{{ completed_count }}</h3>
+                <p class="text-muted mb-0">Completed</p>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card warning">
+                <div class="stats-icon" style="background: linear-gradient(135deg, #fef3c7, #fde68a);">
+                    <i class="fas fa-layer-group text-warning"></i>
+                </div>
+                <h3 class="fw-bold mb-1">{{ all_courses.count }}</h3>
+                <p class="text-muted mb-0">Available</p>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card info">
+                <div class="stats-icon" style="background: linear-gradient(135deg, #cffafe, #a5f3fc);">
+                    <i class="fas fa-star text-info"></i>
+                </div>
+                <h3 class="fw-bold mb-1">{{ recommended_courses.count }}</h3>
+                <p class="text-muted mb-0">Recommended</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Learning -->
+    <div class="row mb-5">
+        <div class="col-12" data-aos="fade-up" data-aos-delay="200">
+            <h2 class="section-title"><i class="fas fa-play-circle me-2"></i>In Progress</h2>
+            {% if in_progress_courses %}
+                <div class="row">
+                    {% for enrollment in in_progress_courses %}
+                        <div class="col-md-6 col-lg-4 mb-4" data-aos="zoom-in" data-aos-delay="{{ forloop.counter0|add:300 }}">
+                            <div class="card course-card h-100">
+                                <div class="position-relative">
+                                    <div class="course-badge">
+                                        <span class="badge {% if enrollment.course.is_free %}badge-free{% else %}badge-paid{% endif %}">
+                                            {% if enrollment.course.is_free %}FREE{% else %}₹{{ enrollment.course.price }}{% endif %}
+                                        </span>
+                                    </div>
+                                    {% if enrollment.course.image %}
+                                        <img src="{{ enrollment.course.image.url }}" class="card-img-top course-img" alt="{{ enrollment.course.title }}">
+                                    {% else %}
+                                        <div class="bg-gradient d-flex align-items-center justify-content-center" style="height: 220px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                            <i class="fas fa-book fa-4x text-white opacity-50"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title fw-bold mb-2">{{ enrollment.course.title }}</h5>
+                                    <p class="card-text text-muted small mb-3">{{ enrollment.course.short_description|truncatewords:15 }}</p>
+                                    
+                                    <!-- Progress Bar -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <small class="text-muted fw-semibold">Progress</small>
+                                            <small class="text-primary fw-bold">{{ enrollment.progress }}%</small>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ enrollment.progress }}%"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <a href="{% url 'course_view' enrollment.course.id %}" class="btn btn-primary w-100">
+                                        <i class="fas fa-play me-2"></i>Continue Learning
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body empty-state">
+                        <i class="fas fa-book-open"></i>
+                        <h5 class="text-muted mb-2">No courses in progress</h5>
+                        <p class="text-muted mb-3">Browse our course catalog and start learning today!</p>
+                        <a href="{% url 'course_list' %}" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>Browse Courses
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Completed Courses -->
+    {% if completed_courses %}
+    <div class="row mb-5">
+        <div class="col-12" data-aos="fade-up" data-aos-delay="300">
+            <h2 class="section-title"><i class="fas fa-trophy me-2 text-success"></i>Completed Courses</h2>
+            <div class="row">
+                {% for enrollment in completed_courses %}
+                    <div class="col-md-6 col-lg-4 mb-4" data-aos="zoom-in" data-aos-delay="{{ forloop.counter0|add:400 }}">
+                        <div class="card course-card h-100 border-success" style="border-width: 2px !important;">
+                            <div class="position-relative">
+                                <div class="completion-badge">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                {% if enrollment.course.image %}
+                                    <img src="{{ enrollment.course.image.url }}" class="card-img-top course-img" alt="{{ enrollment.course.title }}" style="filter: brightness(1.1);">
+                                {% else %}
+                                    <div class="d-flex align-items-center justify-content-center" style="height: 220px; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                        <i class="fas fa-trophy fa-4x text-white opacity-75"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title fw-bold mb-0">{{ enrollment.course.title }}</h5>
+                                    <span class="badge bg-success"><i class="fas fa-check"></i></span>
+                                </div>
+                                <p class="card-text text-muted small mb-3">{{ enrollment.course.short_description|truncatewords:15 }}</p>
+                                
+                                <!-- Completion Info -->
+                                <div class="mb-3">
+                                    <div class="d-flex align-items-center text-success">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        <small class="fw-semibold">Completed on {{ enrollment.completed_at|date:"M d, Y" }}</small>
+                                    </div>
+                                </div>
+                                
+                                <a href="{% url 'course_view' enrollment.course.id %}" class="btn btn-outline-success w-100">
+                                    <i class="fas fa-eye me-2"></i>Review Course
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recommended Courses -->
+    <div class="row">
+        <div class="col-12" data-aos="fade-up" data-aos-delay="400">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="section-title mb-0"><i class="fas fa-star me-2"></i>Recommended for You</h2>
+                <a href="{% url 'course_list' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-th me-2"></i>Browse All
+                </a>
+            </div>
+            
+            {% if recommended_courses %}
+                <div class="row">
+                    {% for course in recommended_courses %}
+                        <div class="col-md-6 col-lg-4 mb-4" data-aos="flip-left" data-aos-delay="{{ forloop.counter0|add:500 }}">
+                            <div class="card course-card h-100">
+                                <div class="position-relative">
+                                    <div class="course-badge">
+                                        <span class="badge {% if course.is_free %}badge-free{% else %}badge-paid{% endif %}">
+                                            {% if course.is_free %}FREE{% else %}₹{{ course.price }}{% endif %}
+                                        </span>
+                                    </div>
+                                    {% if course.image %}
+                                        <img src="{{ course.image.url }}" class="card-img-top course-img" alt="{{ course.title }}">
+                                    {% else %}
+                                        <div class="d-flex align-items-center justify-content-center" style="height: 220px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                            <i class="fas fa-book fa-4x text-white opacity-50"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title fw-bold mb-2">{{ course.title }}</h5>
+                                    <p class="card-text text-muted small mb-3">{{ course.short_description|truncatewords:15 }}</p>
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-users me-1"></i>{{ course.enrollment_count }} enrolled
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-layer-group me-1"></i>{{ course.modules.count }} modules
+                                        </small>
+                                    </div>
+                                    <a href="{% url 'course_detail' course.id %}" class="btn btn-outline-primary w-100">
+                                        <i class="fas fa-info-circle me-2"></i>View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body empty-state">
+                        <i class="fas fa-star"></i>
+                        <h5 class="text-muted mb-2">No recommendations available</h5>
+                        <p class="text-muted mb-0">Check back later for personalized course recommendations.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
